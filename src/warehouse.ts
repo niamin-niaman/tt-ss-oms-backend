@@ -27,6 +27,27 @@ export async function getWareHouse(id: number) {
     }
 }
 
+export async function getWareHouses() {
+
+    try {
+
+        const stock = await prisma.warehouse.findMany({
+            include: {
+                stock: true
+            }
+        })
+
+        return stock
+
+    } catch (error: any) {
+
+        console.error(`Something Went Wrong!! ${error.message}`)
+
+        throw error
+
+    }
+}
+
 // ดึงรายการ warehouses ทั้งหมด ตาม product , หา warehouse ที่ดีทีุ่ด ในแต่ละ line items
 export async function findBestWareHouse(orderLineItems: LineItem[]) {
 
@@ -110,7 +131,7 @@ async function getStockWarehouses(orderLineItem: LineItem) {
         })
 
         if (stocks.length == 0) {
-            const invalidStockError = new Error(`Stock for product ${orderLineItem.product} is not enough`)
+            const invalidStockError = new Error(`สินค้า ${orderLineItem.product} มีปริมาณไม่เพียงพอ`)
             invalidStockError.name = 'STOCK_NOT_ENOUGH'
             throw invalidStockError
         }
@@ -180,7 +201,7 @@ async function getStockWarehouses(orderLineItem: LineItem) {
                 if (needStock <= 0) break;
             }
             if (needStock > 0) {
-                const invalidStockError = new Error(`Stock for product ${orderLineItem.product} is not enough`)
+                const invalidStockError = new Error(`สินค้า ${orderLineItem.product} มีปริมาณไม่เพียงพอ`)
                 invalidStockError.name = 'STOCK_NOT_ENOUGH'
                 throw invalidStockError
             }

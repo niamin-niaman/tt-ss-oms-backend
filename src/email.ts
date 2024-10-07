@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
-export async function sendEmail(to: string, subject: string, htmlContent: string){
-    
+export async function sendEmail(to: string, subject: string, htmlContent: string) {
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.resend.com',
         secure: true,
@@ -20,7 +20,7 @@ export async function sendEmail(to: string, subject: string, htmlContent: string
 
     });
 
-    console.log('info: ', info)
-
-    
+    // console.log('info: ', info)
+    console.log(info.messageId)
+    return info
 }

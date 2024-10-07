@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import nodemailer from 'nodemailer';
 import Bull, { Job } from 'bull';
 import prisma from "./prisma";
-import { findBestWareHouse, getWareHouse } from "./warehouse";
+import { findBestWareHouse, getWareHouse, getWareHouses } from "./warehouse";
 import { getOrder, getOrders, getShippingWarehouse, processOrder, receiveOrder } from "./order";
 import { addEmailQueue } from "./queue";
 
@@ -64,7 +64,7 @@ app.post("/check_email", async (req, res) => {
 
     // console.log('info: ', info)
 
-    const queRes = await addEmailQueue( to, 'Hello World', '<strong>It works!</strong>')
+    const queRes = await addEmailQueue(to, 'Hello World', '<strong>It works!</strong>')
 
     res.json({
         queRes,
@@ -87,7 +87,7 @@ app.get("/check_queue", async (req, res) => {
 
 // Orders
 
-app.get("/orders/debug", async( req, res)=>{
+app.get("/orders/debug", async (req, res) => {
     try {
         // const debugRes = await processOrder(2)
         const debugRes = await getShippingWarehouse(2)
@@ -125,10 +125,8 @@ app.get("/orders/:id", async (req, res) => {
     try {
         const { id } = req.params
         const order = await getOrder(parseInt(id))
-        res.json({
-            id,
-            order
-        })
+
+        res.json(order)
     } catch (error: any) {
         res
             .status(500)
@@ -136,6 +134,23 @@ app.get("/orders/:id", async (req, res) => {
 
                 error,
                 message: `Something Went Wrong! ${error.message}`
+            })
+    }
+})
+
+app.get("/order/:id/warehouse", async (req, res) => {
+    try {
+        const { id } = req.params
+        const warehouse = await getShippingWarehouse(parseInt(id))
+        res.json({
+            warehouse
+        })
+    } catch (error: any) {
+        console.error(error.message)
+        res
+            .status(500)
+            .json({
+                message: error.message
             })
     }
 })
@@ -148,8 +163,7 @@ app.post("/purchase", async (req, res) => {
         const receiveOrderRes = await receiveOrder(body)
 
         res.json({
-            body,
-            message: receiveOrderRes
+            ...receiveOrderRes
         })
 
     } catch (error: any) {
@@ -199,6 +213,15 @@ app.get("/warehouses/debug", async (req, res) => {
     }
 })
 
+app.get("/warehouses", async (req, res) => {
+
+    const warehouse = await getWareHouses()
+
+    res.json({
+        warehouse
+    })
+})
+
 app.get("/warehouses/:id", async (req, res) => {
     const { id } = req.params
 
@@ -209,6 +232,37 @@ app.get("/warehouses/:id", async (req, res) => {
         id,
         warehouse
     })
+})
+
+app.put("/stocks/:id", async (req, res) => {
+    try {
+        const { id } = req.params
+        const { quantity, price, product } = req.body
+
+        const updateStock = await prisma.stock.update({
+            where: {
+                id: parseInt(id)
+            },
+            data: {
+                quantity: quantity,
+                price: price,
+                product: product
+            }
+        })
+
+        res.json({
+            updateStock
+        })
+
+    } catch (error: any) {
+
+        res
+            .status(500)
+            .json({
+                message: error.message
+            })
+    }
+
 })
 
 app.listen(4300, () => {

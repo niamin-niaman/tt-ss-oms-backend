@@ -38,15 +38,15 @@ export async function receiveOrder(order: Order) {
         console.log('add email to queue')
         await addEmailQueue(
             order.email,
-            `ยืนยันการรับคำสั่งซื้อของท่าน #${orderCreated.id}`,
-            `เราขอยืนยันว่าได้รับคำสั่งซื้อหมายเลข ${orderCreated.id} เข้าระบบเรียบร้อยแล้ว`
+            `ยืนยันคำสั่งซื้อ #${orderCreated.id} ของท่าน`,
+            `ระบบของเราได้รับคำสั่งซื้อหมายเลข ${orderCreated.id} ของท่านเรียบร้อยแล้ว ระบบกำลังดำเนินการต่อไป`
         )
 
         console.log('add order to queue')
         await addOrderQueue(orderCreated.id)
 
         return {
-            orderRes: orderCreated,
+            order: orderCreated,
         }
 
     } catch (error: any) {
@@ -85,7 +85,34 @@ export async function getOrder(id: number) {
 
         })
 
-        return order
+        const shippingWarehouse = await prisma.warehouse_shipping.findMany({
+            where: {
+                order_id: id
+            },
+            include: {
+                // order: true,
+                warehouse: true,
+                stock: true
+            }
+        })
+
+        const shippingTimeList = shippingWarehouse
+            .map((warehouse) => warehouse.warehouse?.shipping_time)
+            .filter((time): time is number => time !== undefined && time !== null);
+        const estimateShippingTime = Math.max(...shippingTimeList)
+
+        const priceList = shippingWarehouse
+            .map((warehouse) => warehouse.stock?.price)
+            .filter((price): price is number => price !== undefined && price !== null)
+
+        const cost = priceList.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+        return {
+            order,
+            shippingWarehouse,
+            cost,
+            estimateShippingTime
+        }
 
     } catch (error: any) {
         console.error(`Something Went Wrong!! ${error.message}`)
@@ -124,7 +151,7 @@ export async function getOrders() {
 
 export async function processOrder(orderId: number) {
 
-    const order = await getOrder(orderId)
+    const { order } = await getOrder(orderId)
     if (!order) throw new Error("Order not found")
 
     const lineItems = order.line_item as LineItem[]
@@ -147,8 +174,8 @@ export async function processOrder(orderId: number) {
 
             addEmailQueue(
                 order.email ?? "",
-                `การคืนเงินสำหรับคำสั่งซื้อ #${orderId} ของท่าน`,
-                `เรากำลังดำเนินการคืนเงินสำหรับคำสั่งซื้อหมายเลข ${orderId} ของคุณขออภัยในความไม่สะดวก`
+                `ยกเลิกสำหรับคำสั่งซื้อ #${orderId} ของท่าน`,
+                `เรากำลังดำเนินการคืนเงินสำหรับคำสั่งซื้อหมายเลข ${orderId} ของคุณขออภัยในความไม่สะดวก <br> ${error.message}`
 
             )
         } else {
@@ -202,14 +229,16 @@ export async function processOrder(orderId: number) {
             id: orderId
         },
         data: {
-            status: "complete"
+            status: "shipping"
         }
     })
 
+    const { estimateShippingTime } = await getOrder(orderId)
+
     addEmailQueue(
         order.email ?? "",
-        `คำสั่งซื้อ #${orderId} ของท่านสำเร็จ`,
-        `คำสั่งซื้อหมายเลข ${orderId} ของท่านได้ถูกจัดส่งสำเร็จเรียบร้อยแล้ว`
+        `คำสั่งซื้อ #${orderId} ของท่านดำเนินการเสร็จสิ้น`,
+        `คำสั่งซื้อหมายเลข ${orderId} ของท่านกำลังนำจัดส่งจัด คาดว่าจะได้รับภายใน ${estimateShippingTime} วัน`
 
     )
 
@@ -226,10 +255,16 @@ export async function getShippingWarehouse(orderId: number) {
             order_id: orderId
         },
         include: {
-            order: true,
-            warehouse: true
+            // order: true,
+            warehouse: true,
+            stock: true
         }
     })
+
+    const shippingTimeList = shippingWarehouse
+        .map((warehouse) => warehouse.warehouse?.shipping_time)
+        .filter((time): time is number => time !== undefined && time !== null);
+    const estimateShippingTime = Math.max(...shippingTimeList)
 
     return shippingWarehouse
 }
