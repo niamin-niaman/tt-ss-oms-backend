@@ -9,7 +9,69 @@ datasource db {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model test {
-  id         Int   @id @default(autoincrement())
+  id         Int      @id @default(autoincrement()) @db.SmallInt
   created_at DateTime @default(now()) @db.Timestamptz(6)
   message    String?
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model stock {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  warehouse_id       Int?                 @db.SmallInt
+  product            String?
+  quantity           Int?                 @db.SmallInt
+  price              Int?                 @db.SmallInt
+  warehouse          warehouse?           @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  warehouse_shipping warehouse_shipping[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model warehouse {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  name               String?
+  location_postcode  String?
+  cutoff_time        Int?                 @db.SmallInt
+  shipping_time      Int?                 @db.SmallInt
+  stock              stock[]
+  warehouse_shipping warehouse_shipping[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model line_item {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  order_id           Int?                 @db.SmallInt
+  product            String?
+  quantity           Int?                 @db.SmallInt
+  order              order?               @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  warehouse_shipping warehouse_shipping[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order {
+  id                 Int                  @id @default(autoincrement()) @db.SmallInt
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  shipping_address   String?
+  shipping_postcode  String?
+  status             String?
+  email              String?
+  line_item          line_item[]
+  warehouse_shipping warehouse_shipping[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model warehouse_shipping {
+  id              Int     @id @default(autoincrement())
+  created_at      DateTime   @default(now()) @db.Timestamptz(6)
+  warehouse_id    Int?       @db.SmallInt
+  order_id        Int?       @db.SmallInt
+  line_item_id    Int?       @db.SmallInt
+  stock_id        Int?       @db.SmallInt
+  needed_quantity Int?       @db.SmallInt
+  line_item       line_item? @relation(fields: [line_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order           order?     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  stock           stock?     @relation(fields: [stock_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse       warehouse? @relation(fields: [warehouse_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

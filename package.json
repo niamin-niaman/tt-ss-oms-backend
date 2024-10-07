@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
-    "prisma:g": "npx prisma generate"
+    "prisma:g": "npx prisma generate",
+    "prisma:pull": "npx prisma db pull"
   },
   "keywords": [],
   "author": "",
@@ -20,11 +21,13 @@
     "body-parser": "^1.20.3",
     "bull": "^4.16.3",
     "express": "^4.21.0",
+    "lodash": "^4.17.21",
     "nodemailer": "^6.9.15",
     "nodemon": "^3.1.7",
     "ts-lint": "^4.5.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.10",
     "@types/node": "^22.7.4",
     "prisma": "^5.20.0",
     "ts-node": "^10.9.2",
