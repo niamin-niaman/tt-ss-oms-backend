@@ -208,6 +208,8 @@ async function getStockWarehouses(orderLineItem: LineItem) {
 
             availableStockWarehouses = []
 
+        } else {
+            availableStockWarehouses = _.orderBy(availableStockWarehouses, ["price", "shipping_time"], ["asc", "asc"])
         }
 
 
