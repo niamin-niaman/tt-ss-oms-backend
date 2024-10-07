@@ -174,7 +174,7 @@ export async function processOrder(orderId: number) {
 
             addEmailQueue(
                 order.email ?? "",
-                `ยกเลิกสำหรับคำสั่งซื้อ #${orderId} ของท่าน`,
+                `ยกเลิกสำหรับคำสั่งซื้อ #${orderId} ของคุณ`,
                 `เรากำลังดำเนินการคืนเงินสำหรับคำสั่งซื้อหมายเลข ${orderId} ของคุณขออภัยในความไม่สะดวก <br> ${error.message}`
 
             )
@@ -237,8 +237,8 @@ export async function processOrder(orderId: number) {
 
     addEmailQueue(
         order.email ?? "",
-        `คำสั่งซื้อ #${orderId} ของท่านดำเนินการเสร็จสิ้น`,
-        `คำสั่งซื้อหมายเลข ${orderId} ของท่านกำลังนำจัดส่งจัด คาดว่าจะได้รับภายใน ${estimateShippingTime} วัน`
+        `คำสั่งซื้อ #${orderId} ของคุณดำเนินการเสร็จสิ้น`,
+        `คำสั่งซื้อหมายเลข ${orderId} ของท่านกำลังนำจัดส่ง คาดว่าจะได้รับภายใน ${estimateShippingTime} วัน`
 
     )
 
